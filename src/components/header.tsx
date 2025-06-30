@@ -6,13 +6,23 @@ import Link from "next/link"
 import { useLanguage } from "@/hooks/useLanguage"
 
 export function Header() {
-  const { t } = useLanguage()
+  const { t, currentLanguage } = useLanguage()
   
+  const getLocalizedPath = (path: string) => {
+    const paths = {
+      rooms: { en: '/rooms', tr: '/odalar' },
+      services: { en: '/services', tr: '/hizmetler' },
+      gallery: { en: '/gallery', tr: '/galeri' },
+      contact: { en: '/contact', tr: '/iletisim' }
+    }
+    return paths[path as keyof typeof paths][currentLanguage]
+  }
+
   return (
     <header className="bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <Link href="/" className="flex items-center space-x-3 hover:opacity-90 transition-opacity">
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
               <span className="text-orange-600 font-bold text-2xl">S</span>
             </div>
@@ -20,18 +30,18 @@ export function Header() {
               <span className="text-3xl font-bold">Summora</span>
               <p className="text-orange-100 text-sm">Boutique Hotel</p>
             </div>
-          </div>
+          </Link>
           <nav className="hidden md:flex space-x-8">
-            <Link href="/rooms" className="hover:text-orange-200 transition-colors">
+            <Link href={getLocalizedPath('rooms')} className="hover:text-orange-200 transition-colors">
               {t.rooms}
             </Link>
-            <Link href="/services" className="hover:text-orange-200 transition-colors">
+            <Link href={getLocalizedPath('services')} className="hover:text-orange-200 transition-colors">
               {t.services}
             </Link>
-            <Link href="/gallery" className="hover:text-orange-200 transition-colors">
+            <Link href={getLocalizedPath('gallery')} className="hover:text-orange-200 transition-colors">
               {t.gallery}
             </Link>
-            <Link href="/contact" className="hover:text-orange-200 transition-colors">
+            <Link href={getLocalizedPath('contact')} className="hover:text-orange-200 transition-colors">
               {t.contact}
             </Link>
           </nav>

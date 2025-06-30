@@ -2,16 +2,20 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useLanguage } from "@/hooks/useLanguage"
-import { languages } from "@/utils/translations"
 import type { Language } from "@/types/language"
 
-export function LanguageSelector() {
-  const { language, setLanguage } = useLanguage()
+const languages = [
+  { code: 'tr' as Language, name: 'Türkçe', flag: '🇹🇷' },
+  { code: 'en' as Language, name: 'English', flag: '🇬🇧' }
+]
 
-  const selectedLanguage = languages.find(lang => lang.code === language)
+export function LanguageSelector() {
+  const { currentLanguage, setLanguage } = useLanguage()
+
+  const selectedLanguage = languages.find(lang => lang.code === currentLanguage)
 
   return (
-    <Select value={language} onValueChange={(value: Language) => setLanguage(value)}>
+    <Select value={currentLanguage} onValueChange={(value: Language) => setLanguage(value)}>
       <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white hover:bg-white/20">
         <div className="flex items-center space-x-2">
 {/*           <span>{selectedLanguage?.flag}</span> */}

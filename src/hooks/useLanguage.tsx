@@ -1,14 +1,10 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { usePathname, useRouter } from 'next/navigation'
+import { Language } from '@/types/language'
 
-interface Translations {
-  [key: string]: {
-    [key: string]: string
-  }
-}
-
-const translations: Translations = {
+const translations = {
   tr: {
     rooms: "Odalar",
     services: "Hizmetler",
@@ -133,41 +129,73 @@ const translations: Translations = {
   }
 }
 
-interface LanguageContextType {
-  language: 'tr' | 'en'
-  setLanguage: (lang: 'tr' | 'en') => void
-  t: { [key: string]: string }
+type LanguageContextType = {
+  t: typeof translations[Language]
+  currentLanguage: Language
+  setLanguage: (lang: Language) => void
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
+
+const pathMappings = {
+  tr: {
+    '/rooms': '/odalar',
+    '/services': '/hizmetler',
+    '/gallery': '/galeri',
+    '/contact': '/iletisim'
+  },
+  en: {
+    '/odalar': '/rooms',
+    '/hizmetler': '/services',
+    '/galeri': '/gallery',
+    '/iletisim': '/contact'
+  }
+}
 
 interface LanguageProviderProps {
   children: ReactNode
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [language, setLanguage] = useState<'tr' | 'en'>('tr')
+  const [currentLanguage, setCurrentLanguage] = useState<Language>('tr')
+  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedLanguage = localStorage.getItem('language') as 'tr' | 'en'
+      const savedLanguage = localStorage.getItem('language') as Language
       if (savedLanguage) {
-        setLanguage(savedLanguage)
+        setCurrentLanguage(savedLanguage)
       }
     }
   }, [])
 
-  const handleLanguageChange = (lang: 'tr' | 'en') => {
-    setLanguage(lang)
+  const updateURL = (lang: Language) => {
+    const mappings = pathMappings[lang]
+    let newPath = pathname
+
+    // URL'yi güncelle
+    Object.entries(mappings).forEach(([oldPath, newPath]) => {
+      if (pathname.startsWith(oldPath)) {
+        // replace kullanarak sayfa yenilenmesini önle
+        window.history.pushState({}, '', pathname.replace(oldPath, newPath))
+        return
+      }
+    })
+  }
+
+  const setLanguage = (lang: Language) => {
+    setCurrentLanguage(lang)
     if (typeof window !== 'undefined') {
       localStorage.setItem('language', lang)
+      updateURL(lang)
     }
   }
 
   const value = {
-    language,
-    setLanguage: handleLanguageChange,
-    t: translations[language]
+    t: translations[currentLanguage],
+    currentLanguage,
+    setLanguage
   }
 
   return (
