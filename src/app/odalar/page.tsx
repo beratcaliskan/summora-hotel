@@ -5,6 +5,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import Loading from "@/components/ui/loading"
 import { supabase } from "@/lib/supabase"
 import type { Database } from "@/types/supabase"
 
@@ -14,6 +15,7 @@ export default function RoomsPage() {
   const { t, currentLanguage } = useLanguage()
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchRooms() {
@@ -24,7 +26,9 @@ export default function RoomsPage() {
           .order('price', { ascending: true })
 
         if (error) {
-          throw error
+          console.error('Supabase error:', error)
+          setError('Odalar yüklenirken bir hata oluştu')
+          return
         }
 
         if (data) {
@@ -32,6 +36,7 @@ export default function RoomsPage() {
         }
       } catch (error) {
         console.error('Error fetching rooms:', error)
+        setError('Bağlantı hatası')
       } finally {
         setLoading(false)
       }
@@ -41,10 +46,17 @@ export default function RoomsPage() {
   }, [])
 
   if (loading) {
+    return <Loading />
+  }
+
+  if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white via-orange-50 to-orange-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-orange-500"></div>
-      </div>
+      <main className="min-h-screen bg-gradient-to-b from-white via-orange-50 to-orange-100 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-orange-950 mb-4">Hata</h2>
+          <p className="text-orange-700">{error}</p>
+        </div>
+      </main>
     )
   }
 
@@ -61,9 +73,16 @@ export default function RoomsPage() {
             <Card key={room.id} className="bg-white/80 backdrop-blur-sm overflow-hidden hover:scale-[1.02] transition-transform duration-300 border-orange-200 shadow-lg hover:shadow-xl">
               <div className="aspect-video relative">
                 <img
-                  src={room.image_url}
-                  alt={room[`title_${currentLanguage}` as keyof Room]}
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/room-photos/${room.featured_image_url}`}
+                  alt={(room.title as any)?.[currentLanguage] || 'Room'}
                   className="object-cover w-full h-full"
+                  onError={(e) => {
+                    console.error('❌ Room image failed to load:', room.featured_image_url)
+                    e.currentTarget.src = '/placeholder.svg?height=300&width=500'
+                  }}
+                  onLoad={() => {
+                    console.log('✅ Room image loaded:', room.featured_image_url)
+                  }}
                 />
                 <Badge className="absolute top-4 right-4 bg-gradient-to-r from-orange-400 to-amber-400 text-white border-none shadow-md">
                   {room.price}₺ / {t.night}
@@ -71,11 +90,11 @@ export default function RoomsPage() {
               </div>
               <div className="p-6">
                 <h3 className="text-2xl font-semibold mb-2 text-orange-950">
-                  {room[`title_${currentLanguage}` as keyof Room]}
+                  {(room.title as any)?.[currentLanguage] || 'Room'}
                 </h3>
-                {room[`description_${currentLanguage}` as keyof Room] && (
+                {room.description && (
                   <p className="text-orange-700 mb-4">
-                    {room[`description_${currentLanguage}` as keyof Room]}
+                    {(room.description as any)?.[currentLanguage] || ''}
                   </p>
                 )}
                 <div className="flex items-center gap-4 text-orange-700 mb-4">

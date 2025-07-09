@@ -18,6 +18,11 @@ export const supabase = createClient<Database>(
     },
     db: {
       schema: 'public'
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'self-hosted-bypass'
+      }
     }
   }
 ) 

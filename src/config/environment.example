@@ -1,0 +1,39 @@
+# ============================================
+# SUPABASE SELF-HOSTED CONFIGURATION
+# ============================================
+# Bu dosyayı .env.local olarak kopyalayın
+
+# Self-hosted Supabase URL (Kong gateway)
+NEXT_PUBLIC_SUPABASE_URL=http://192.168.1.16:8001
+
+# Supabase Anon Key (public key)
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+
+# Supabase Service Role Key (admin key - sadece server-side)
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+
+# Database Direct URL (PostgreSQL)
+DATABASE_URL=postgresql://postgres:beratmice123@192.168.1.16:5433/postgres
+
+# Storage Configuration
+NEXT_PUBLIC_STORAGE_URL=http://192.168.1.16:8001/storage/v1
+STORAGE_BUCKET_NAME=room-photos
+MAX_FILE_SIZE=5242880
+ALLOWED_MIME_TYPES=image/jpeg,image/png,image/webp
+
+# API Configuration
+NEXT_PUBLIC_API_URL=http://192.168.1.16:8001
+NEXT_PUBLIC_REST_URL=http://192.168.1.16:8001/rest/v1
+
+# Development
+NODE_ENV=development
+NEXT_PUBLIC_ENV=development
+
+# ============================================
+# PRODUCTION CONFIGURATION (Self-hosted)
+# ============================================
+# Production için bu değerleri kendi domain'inizle değiştirin:
+# NEXT_PUBLIC_SUPABASE_URL=https://your-domain.com
+# NEXT_PUBLIC_STORAGE_URL=https://your-domain.com/storage/v1
+# NEXT_PUBLIC_API_URL=https://your-domain.com
+# NEXT_PUBLIC_REST_URL=https://your-domain.com/rest/v1 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -33,11 +33,42 @@ import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import { useLanguage } from "@/hooks/useLanguage"
 import { LanguageSelector } from "@/components/language-selector"
+import { supabase } from "@/lib/supabase"
+import type { Database } from "@/types/supabase"
+
+type Room = Database['public']['Tables']['rooms']['Row']
 
 export default function Component() {
-  const { t } = useLanguage()
+  const { t, currentLanguage } = useLanguage()
   const [checkIn, setCheckIn] = useState<Date>()
   const [checkOut, setCheckOut] = useState<Date>()
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [roomsLoading, setRoomsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchRooms() {
+      try {
+        const { data, error } = await supabase
+          .from('rooms')
+          .select('*')
+          .eq('is_active', true)
+          .order('price', { ascending: true })
+          .limit(4)
+
+        if (error) {
+          console.error('Error fetching rooms:', error)
+        } else {
+          setRooms(data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching rooms:', error)
+      } finally {
+        setRoomsLoading(false)
+      }
+    }
+
+    fetchRooms()
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
@@ -172,143 +203,98 @@ export default function Component() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Standard Room */}
-            <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
-              <div className="relative">
-                <Image
-                  src="/placeholder.svg?height=300&width=500"
-                  alt="Standart Oda"
-                  width={500}
-                  height={300}
-                  className="w-full h-72 object-cover"
-                />
-                <Badge className="absolute top-4 left-4 bg-orange-600 hover:bg-orange-700">{t.popular}</Badge>
-              </div>
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">{t.standardRoom}</h3>
-                <p className="text-gray-600 mb-4">
-                  25m² alanda, şehir manzaralı, modern mobilyalarla döşenmiş konforlu odamız.
-                </p>
-                <div className="flex items-center space-x-4 mb-6">
-                  <Wifi className="h-5 w-5 text-orange-500" />
-                  <Coffee className="h-5 w-5 text-orange-500" />
-                  <span className="text-sm text-gray-600">Klima, Minibar, TV</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-3xl font-bold text-orange-600">₺1,200</span>
-                    <span className="text-gray-500 ml-1">/gece</span>
-                  </div>
-                  <Button className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700">
-                    Rezervasyon
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {roomsLoading ? (
+              // Loading skeleton
+              <>
+                {[1, 2, 3, 4].map((index) => (
+                  <Card key={index} className="overflow-hidden border-0 bg-white/80 backdrop-blur-sm">
+                    <div className="relative">
+                      <div className="w-full h-72 bg-gray-200 animate-pulse"></div>
+                    </div>
+                    <CardContent className="p-8">
+                      <div className="h-6 bg-gray-200 rounded animate-pulse mb-3"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse mb-4"></div>
+                      <div className="h-4 bg-gray-200 rounded animate-pulse mb-6"></div>
+                      <div className="flex items-center justify-between">
+                        <div className="h-8 w-24 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            ) : (
+              // Dynamic rooms
+              rooms.map((room, index) => {
+                const getBadgeConfig = (roomType: string, index: number) => {
+                  switch (roomType) {
+                    case 'standard':
+                      return { text: t.popular, bgColor: 'bg-orange-600 hover:bg-orange-700' }
+                    case 'deluxe':
+                      return { text: t.recommended, bgColor: 'bg-blue-600 hover:bg-blue-700' }
+                    case 'suite':
+                      return { text: t.luxury, bgColor: 'bg-purple-600 hover:bg-purple-700' }
+                    case 'presidential':
+                      return { text: 'VIP', bgColor: 'bg-yellow-600 hover:bg-yellow-700' }
+                    default:
+                      return { text: t.popular, bgColor: 'bg-orange-600 hover:bg-orange-700' }
+                  }
+                }
 
-            {/* Deluxe Room */}
-            <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
-              <div className="relative">
-                <Image
-                  src="/placeholder.svg?height=300&width=500"
-                  alt="Deluxe Oda"
-                  width={500}
-                  height={300}
-                  className="w-full h-72 object-cover"
-                />
-                <Badge className="absolute top-4 left-4 bg-blue-600 hover:bg-blue-700">{t.recommended}</Badge>
-              </div>
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">{t.deluxeRoom}</h3>
-                <p className="text-gray-600 mb-4">35m² alanda, Boğaz manzaralı, jakuzili banyosu olan lüks odamız.</p>
-                <div className="flex items-center space-x-4 mb-6">
-                  <Wifi className="h-5 w-5 text-orange-500" />
-                  <Coffee className="h-5 w-5 text-orange-500" />
-                  <Spa className="h-5 w-5 text-orange-500" />
-                  <span className="text-sm text-gray-600">Jakuzi, Balkon</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-3xl font-bold text-orange-600">₺2,000</span>
-                    <span className="text-gray-500 ml-1">/gece</span>
-                  </div>
-                  <Button className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700">
-                    Rezervasyon
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Suite Room */}
-            <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
-              <div className="relative">
-                <Image
-                  src="/placeholder.svg?height=300&width=500"
-                  alt="Suit Oda"
-                  width={500}
-                  height={300}
-                  className="w-full h-72 object-cover"
-                />
-                <Badge className="absolute top-4 left-4 bg-purple-600 hover:bg-purple-700">{t.luxury}</Badge>
-              </div>
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">{t.suiteRoom}</h3>
-                <p className="text-gray-600 mb-4">
-                  50m² alanda, ayrı oturma odası, panoramik şehir manzarası olan suit odamız.
-                </p>
-                <div className="flex items-center space-x-4 mb-6">
-                  <Wifi className="h-5 w-5 text-orange-500" />
-                  <Coffee className="h-5 w-5 text-orange-500" />
-                  <Spa className="h-5 w-5 text-orange-500" />
-                  <Utensils className="h-5 w-5 text-orange-500" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-3xl font-bold text-orange-600">₺3,500</span>
-                    <span className="text-gray-500 ml-1">/gece</span>
-                  </div>
-                  <Button className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700">
-                    Rezervasyon
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Presidential Suite */}
-            <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
-              <div className="relative">
-                <Image
-                  src="/placeholder.svg?height=300&width=500"
-                  alt="Presidential Suit"
-                  width={500}
-                  height={300}
-                  className="w-full h-72 object-cover"
-                />
-                <Badge className="absolute top-4 left-4 bg-yellow-600 hover:bg-yellow-700">VIP</Badge>
-              </div>
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">{t.presidentialSuite}</h3>
-                <p className="text-gray-600 mb-4">
-                  80m² alanda, özel hizmet, butik bar, özel terası olan en lüks odamız.
-                </p>
-                <div className="flex items-center space-x-4 mb-6">
-                  <Wifi className="h-5 w-5 text-orange-500" />
-                  <Coffee className="h-5 w-5 text-orange-500" />
-                  <Spa className="h-5 w-5 text-orange-500" />
-                  <Utensils className="h-5 w-5 text-orange-500" />
-                  <Car className="h-5 w-5 text-orange-500" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-3xl font-bold text-orange-600">₺6,000</span>
-                    <span className="text-gray-500 ml-1">/gece</span>
-                  </div>
-                  <Button className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700">
-                    Rezervasyon
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                const badgeConfig = getBadgeConfig(room.room_type, index)
+                
+                return (
+                  <Card key={room.id} className="overflow-hidden hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
+                    <div className="relative">
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/room-photos/${room.featured_image_url}`}
+                        alt={(room.title as any)?.[currentLanguage] || 'Room'}
+                        width={500}
+                        height={300}
+                        className="w-full h-72 object-cover"
+                        onError={(e) => {
+                          console.error('❌ Featured image failed to load:', room.featured_image_url)
+                          e.currentTarget.src = '/placeholder.svg?height=300&width=500'
+                        }}
+                        onLoad={() => {
+                          console.log('✅ Featured image loaded:', room.featured_image_url)
+                        }}
+                      />
+                      <Badge className={`absolute top-4 left-4 ${badgeConfig.bgColor}`}>
+                        {badgeConfig.text}
+                      </Badge>
+                    </div>
+                    <CardContent className="p-8">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                        {(room.title as any)?.[currentLanguage] || 'Room'}
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        {(room.description as any)?.[currentLanguage] || ''}
+                      </p>
+                      <div className="flex items-center space-x-4 mb-6">
+                        <Wifi className="h-5 w-5 text-orange-500" />
+                        <Coffee className="h-5 w-5 text-orange-500" />
+                        {room.room_type !== 'standard' && <Spa className="h-5 w-5 text-orange-500" />}
+                        {(room.room_type === 'suite' || room.room_type === 'presidential') && <Utensils className="h-5 w-5 text-orange-500" />}
+                        {room.room_type === 'presidential' && <Car className="h-5 w-5 text-orange-500" />}
+                        <span className="text-sm text-gray-600">
+                          {room.amenities.slice(0, 3).join(', ')}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-3xl font-bold text-orange-600">₺{room.price}</span>
+                          <span className="text-gray-500 ml-1">/{t.night}</span>
+                        </div>
+                        <Button className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700">
+                          {t.makeReservation}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })
+            )}
           </div>
         </div>
       </section>

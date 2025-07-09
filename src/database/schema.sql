@@ -34,29 +34,6 @@ CREATE TABLE reservations (
   total_price INTEGER NOT NULL
 );
 
--- RLS politikalarını ayarla
-ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reservations ENABLE ROW LEVEL SECURITY;
-
--- Herkesin odaları görmesine izin ver
-CREATE POLICY "Allow public read access to rooms" ON rooms
-  FOR SELECT USING (true);
-
--- Herkesin rezervasyon yapmasına izin ver
-CREATE POLICY "Allow public insert access to reservations" ON reservations
-  FOR INSERT WITH CHECK (true);
-
--- Sadece kendi rezervasyonlarını görebilsinler
-CREATE POLICY "Allow users to view their own reservations" ON reservations
-  FOR SELECT USING (auth.uid() IS NULL);
-
--- Storage bucket oluştur
-INSERT INTO storage.buckets (id, name, public) VALUES ('rooms', 'rooms', true);
-
--- Public erişim politikası
-CREATE POLICY "Public Access" ON storage.objects
-  FOR SELECT USING (bucket_id = 'rooms');
-
 -- Örnek veriler
 INSERT INTO rooms (
   title,
